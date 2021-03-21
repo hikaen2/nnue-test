@@ -6,20 +6,20 @@ void main()
 {
     File f = File( "nn.bin", "r");
 
-    uint32_t[] version_                  = f.rawRead( new uint32_t[1]);
-    uint32_t[] hash                      = f.rawRead( new uint32_t[1]);
-    uint32_t[] size                      = f.rawRead( new uint32_t[1]);
-    char[]     architecture              = f.rawRead( new char[size[0]]); // char[178]
-    uint32_t[] header1                   = f.rawRead( new uint32_t[1]);
-    int16_t[]  featureTransformerBiases  = f.rawRead( new int16_t[256]);
-    int16_t[]  featureTransformerWeights = f.rawRead( new int16_t[256 * 81* 1548]);
-    uint32_t[] header2                   = f.rawRead( new uint32_t[1]);
-    int32_t[]  hiddenLayer1Biases        = f.rawRead( new int32_t[32]);
-    int8_t[]   hiddenLayer1Weights       = f.rawRead( new int8_t[32 * 512]);
-    int32_t[]  hiddenLayer2Biases        = f.rawRead( new int32_t[32]);
-    int8_t[]   hiddenLayer2Weights       = f.rawRead( new int8_t[32 * 32]);
-    int32_t[]  outputLayerBiases         = f.rawRead( new int32_t[1]);
-    int8_t[]   outputLayerWeights        = f.rawRead( new int8_t[1 * 32]);
+    uint32_t[] version_                  = f.rawRead(new uint32_t[1]);
+    uint32_t[] hash                      = f.rawRead(new uint32_t[1]);
+    uint32_t[] size                      = f.rawRead(new uint32_t[1]);
+    char[]     architecture              = f.rawRead(new char[size[0]]); // char[178]
+    uint32_t[] header1                   = f.rawRead(new uint32_t[1]);
+    int16_t[]  featureTransformerBiases  = f.rawRead(new int16_t[256]);
+    int16_t[]  featureTransformerWeights = f.rawRead(new int16_t[256 * 81* 1548]);
+    uint32_t[] header2                   = f.rawRead(new uint32_t[1]);
+    int32_t[]  hiddenLayer1Biases        = f.rawRead(new int32_t[32]);
+    int8_t[]   hiddenLayer1Weights       = f.rawRead(new int8_t[32 * 512]);
+    int32_t[]  hiddenLayer2Biases        = f.rawRead(new int32_t[32]);
+    int8_t[]   hiddenLayer2Weights       = f.rawRead(new int8_t[32 * 32]);
+    int32_t[]  outputLayerBiases         = f.rawRead(new int32_t[1]);
+    int8_t[]   outputLayerWeights        = f.rawRead(new int8_t[1 * 32]);
     enforce( f.tell == f.size, "invalid file");
 
     writefln( "version: %#08x", version_[0]);    // => "version: 0x7af32f16"
