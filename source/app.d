@@ -45,7 +45,6 @@ void main()
     //Position pos = parseSfen("lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w -");
     writeln(pos.toKi2());
 
-    int bk, wk;
     int[38] blist, wlist;
     mklist(pos, blist, wlist);
 
