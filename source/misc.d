@@ -4,6 +4,7 @@ import std.algorithm;
 import std.array;
 import std.ascii;
 import std.conv;
+import std.exception;
 import std.format;
 import std.regex;
 import std.stdint;
@@ -118,6 +119,7 @@ Position parseSfen(string sfen)
 
     Position pos;
     int index = 0;
+    foreach (ref p; pos.pieces) p = Piece(Color.NONE, Type.EMPTY, -2);
 
     string[] a = sfen.split(" ");
     string boardState = a[0];
@@ -125,9 +127,7 @@ Position parseSfen(string sfen)
     string piecesInHand = a[2];
 
     // 手番
-    if (sideToMove != "b" && sideToMove != "w") {
-        throw new StringException(sfen);
-    }
+    enforce(sideToMove == "b" || sideToMove == "w", format("invalid side to move: '%s'.", sideToMove));
     pos.sideToMove = sideToMove == "b" ? Color.BLACK : Color.WHITE;
 
     // 盤面
@@ -139,9 +139,7 @@ Position parseSfen(string sfen)
     for (int rank = 0; rank <= 8; rank++) {
         for (int file = 8; file >= 0; file--) {
             auto t = COLOR_TYPE[m.front.hit];
-            if (t[1] != Type.EMPTY) {
-                pos.pieces[index++] = Piece(t[0], t[1], file * 9 + rank);
-            }
+            if (t[1] != Type.EMPTY) pos.pieces[index++] = Piece(t[0], t[1], file * 9 + rank);
             m.popFront();
         }
     }

@@ -23,7 +23,7 @@ void main()
     int8_t[]   hiddenLayer2Weights       = f.rawRead(new int8_t[32 * 32]);
     int32_t[]  outputLayerBiases         = f.rawRead(new int32_t[1]);
     int8_t[]   outputLayerWeights        = f.rawRead(new int8_t[1 * 32]);
-    enforce(f.tell == f.size, "invalid file");
+    enforce(f.tell == f.size, "invalid loading");
 
     writefln("version: %#08x", version_[0]);    // => "version: 0x7af32f16"
     writefln("hash   : %#08x", hash[0]);        // => "hash   : 0x3e5aa6ee"
@@ -33,47 +33,46 @@ void main()
 
 
     //foreach(i, e; outputLayerWeights) {
-    //    writefln("%d:%d",i,e);
+    //    writefln("%d:%d", i, e);
     //}
 
 
-    //Piece a = {Color.WHITE, Type.LANCE, -1};
     //Position pos = parseSfen("lnsgkgsnl/1r5b1/ppppppppp/9/9/9/PPPPPPPPP/1B5R1/LNSGKGSNL b -");
     Position pos = parseSfen("8l/1l+R2P3/p2pBG1pp/kps1p4/Nn1P2G2/P1P1P2PP/1PS6/1KSG3+r1/LN2+p3L w Sbgn3p 124");
     //Position pos = parseSfen("8l/1l+R2P3/p2pBG1pp/kps1p4/Nn1P2G2/P1P1P2PP/1PS6/1KSG3+r1/LN2+p3L w SBGN3P 124");
     //Position pos = parseSfen("lnsgkgsnl/1r5b1/p1ppppppp/7P1/1p7/9/PPPPPPP1P/1B5R1/LNSGKGSNL w -");
     //Position pos = parseSfen("lnsgkgsnl/1r5b1/ppppppppp/9/9/7P1/PPPPPPP1P/1B5R1/LNSGKGSNL w -");
+    //Position pos = parseSfen("8K/8P/9/9/9/9/9/9/k8 b -");
     writeln(pos.toKi2());
 
+
     int[38] blist, wlist;
-    mklist(pos, blist, wlist);
+    mklist(pos, blist, wlist); // 特徴ベクトルを作る
 
-    int16_t[256] a;
-    int16_t[256] b;
-    w1(blist.ptr, featureTransformerBiases.ptr, featureTransformerWeights.ptr, a.ptr);
-    w1(wlist.ptr, featureTransformerBiases.ptr, featureTransformerWeights.ptr, b.ptr);
+    int16_t[256] yb;
+    int16_t[256] yw;
+    w1(blist.ptr, featureTransformerBiases.ptr, featureTransformerWeights.ptr, yb.ptr); // blistからybを作る（先手の分）
+    w1(wlist.ptr, featureTransformerBiases.ptr, featureTransformerWeights.ptr, yw.ptr); // wlistからybを作る（後手の分）
 
-    uint8_t[512] c;
-    transform(b.ptr, a.ptr, c.ptr);
-
-    uint8_t[32] d;
-    w2(c.ptr, hiddenLayer1Biases.ptr, hiddenLayer1Weights.ptr, d.ptr);
-
-    uint8_t[32] e;
-    w3(d.ptr, hiddenLayer2Biases.ptr, hiddenLayer2Weights.ptr, e.ptr);
-
-    int32_t[1] f0;
-    w4(e.ptr, outputLayerBiases.ptr, outputLayerWeights.ptr, f0.ptr);
-
-    foreach (i; f0) {
-        writeln(i / 16);
+    uint8_t[512] z1;
+    if (pos.sideToMove == Color.BLACK) {
+        transform(yb.ptr, yw.ptr, z1.ptr); // yb, ywを連結してz1を作る（先手番）
+    } else {
+        transform(yw.ptr, yb.ptr, z1.ptr); // yw, ybを連結してz1を作る（後手番）
     }
+
+    uint8_t[32] z2;
+    w2(z1.ptr, hiddenLayer1Biases.ptr, hiddenLayer1Weights.ptr, z2.ptr); // z1からz2を作る
+
+    uint8_t[32] z3;
+    w3(z2.ptr, hiddenLayer2Biases.ptr, hiddenLayer2Weights.ptr, z3.ptr); // z2からz3を作る
+
+    int32_t[1] z4;
+    w4(z3.ptr, outputLayerBiases.ptr, outputLayerWeights.ptr, z4.ptr); // z3からz4を作る
+
+    writeln(z4[0] / 16);
 }
 
-
-uint8_t clippedReLU(int32_t input) {
-    return cast(uint8_t)(max(0, min(127, input >> 6)));
-}
 
 void transform(int16_t* p0, int16_t* p1, uint8_t* output) {
     for (int i = 0; i < 256; i++) {
@@ -102,7 +101,7 @@ void w2(uint8_t* input, int32_t* biases, int8_t* weights, uint8_t* output) {
         for (int j = 0; j < 512; j++) { // 列
             sum += weights[i * 512 + j] * input[j];
         }
-        output[i] = clippedReLU(sum);
+        output[i] = cast(uint8_t)(max(0, min(127, sum >> 6)));
     }
 }
 
@@ -113,7 +112,7 @@ void w3(uint8_t* input, int32_t* biases, int8_t* weights, uint8_t* output) {
         for (int j = 0; j < 32; j++) { // 列
             sum += weights[i * 32 + j] * input[j];
         }
-        output[i] = clippedReLU(sum);
+        output[i] = cast(uint8_t)(max(0, min(127, sum >> 6)));
     }
 }
 
