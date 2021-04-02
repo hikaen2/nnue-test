@@ -18,9 +18,9 @@ import std.typecons;
  */
 enum Color
 {
-    BLACK             = 0,  // 先手
-    WHITE             = 1,  // 後手
-    NONE              = 2,  // なし
+    BLACK           = 0,  // 先手
+    WHITE           = 1,  // 後手
+    NONE            = 2,  // なし
 }
 
 /**
@@ -28,21 +28,21 @@ enum Color
  */
 enum Type
 {
-    PAWN              = 0,  // 歩
-    LANCE             = 1,  // 香
-    KNIGHT            = 2,  // 桂
-    SILVER            = 3,  // 銀
-    GOLD              = 4,  // 金
-    BISHOP            = 5,  // 角
-    ROOK              = 6,  // 飛
-    KING              = 7,  // 王
-    PROMOTED_PAWN     = 8,  // と
-    PROMOTED_LANCE    = 9,  // 成香
-    PROMOTED_KNIGHT   = 10, // 成桂
-    PROMOTED_SILVER   = 11, // 成銀
-    PROMOTED_BISHOP   = 12, // 馬
-    PROMOTED_ROOK     = 13, // 龍
-    EMPTY             = 14, // 空
+    PAWN            = 0,  // 歩
+    LANCE           = 1,  // 香
+    KNIGHT          = 2,  // 桂
+    SILVER          = 3,  // 銀
+    GOLD            = 4,  // 金
+    BISHOP          = 5,  // 角
+    ROOK            = 6,  // 飛
+    KING            = 7,  // 王
+    PROMOTED_PAWN   = 8,  // と
+    PROMOTED_LANCE  = 9,  // 成香
+    PROMOTED_KNIGHT = 10, // 成桂
+    PROMOTED_SILVER = 11, // 成銀
+    PROMOTED_BISHOP = 12, // 馬
+    PROMOTED_ROOK   = 13, // 龍
+    EMPTY           = 14, // 空
 }
 
 /**
@@ -61,7 +61,8 @@ enum Type
  * 79 70 61 52 43 34 25 16  7|八
  * 80 71 62 53 44 35 26 17  8|九
  */
-struct Piece {
+struct Piece
+{
     Color color;
     Type type;
     int address;
@@ -85,7 +86,7 @@ struct Position
  */
 Position parseSfen(string sfen)
 {
-    immutable Tuple!(Color, Type)[string] COLOR_TYPE = [
+    immutable COLOR_TYPE = [
         "1":  tuple(Color.NONE, Type.EMPTY),
         "P":  tuple(Color.BLACK, Type.PAWN),
         "L":  tuple(Color.BLACK, Type.LANCE),
@@ -169,9 +170,9 @@ Piece lookAt(Position pos, int address)
 
 string toKi2(ref Position pos)
 {
-    immutable string[] COLOR_STR = [" ", "v", " "];
-    immutable string[] TYPE_STR = ["歩", "香", "桂", "銀", "金", "角", "飛", "玉", "と", "杏", "圭", "全", "馬", "龍", "・"];
-    immutable string[] NUM_STR = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八"];
+    immutable COLOR_STR = [" ", "v", " "];
+    immutable TYPE_STR = ["歩", "香", "桂", "銀", "金", "角", "飛", "玉", "と", "杏", "圭", "全", "馬", "龍", "・"];
+    immutable NUM_STR = ["〇", "一", "二", "三", "四", "五", "六", "七", "八", "九", "十", "十一", "十二", "十三", "十四", "十五", "十六", "十七", "十八"];
 
     string hand(ref Position pos, Color color)
     {
@@ -212,7 +213,7 @@ void mklist(ref Position pos, out int[38] blist, out int[38] wlist)
      * key: [color_t][type_t]
      * see https://github.com/HiraokaTakuya/apery/blob/32216277e51c3b008e3c8eea6954f1bb3c416b57/src/evaluate.hpp#L36
      */
-    immutable short[][] OFFSET_HAND = [
+    immutable OFFSET_HAND = [
       // 歩, 香, 桂, 銀, 金, 角, 飛,
         [ 1, 39, 49, 59, 69, 79, 85],
         [20, 44, 54, 64, 74, 82, 88],
@@ -223,7 +224,7 @@ void mklist(ref Position pos, out int[38] blist, out int[38] wlist)
      * key: Square
      * see https://github.com/HiraokaTakuya/apery/blob/32216277e51c3b008e3c8eea6954f1bb3c416b57/src/evaluate.hpp#L36
      */
-    immutable short[][] OFFSET_PP = [
+    immutable OFFSET_PP = [
        // 歩,  香,  桂,  銀,  金,  角,   飛, 王,  と, 成香, 成桂, 成銀,   馬,   龍,
         [ 90, 252, 414, 576, 738, 900, 1224,  0, 738,  738,  738,  738, 1062, 1386],
         [171, 333, 495, 657, 819, 981, 1305,  0, 819,  819,  819,  819, 1143, 1467],
