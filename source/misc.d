@@ -45,10 +45,32 @@ enum Type
     EMPTY           = 14, // 空
 }
 
+Type unpromote(Type t)
+{
+    immutable T = [
+        Type.PAWN,
+        Type.LANCE,
+        Type.KNIGHT,
+        Type.SILVER,
+        Type.GOLD,
+        Type.BISHOP,
+        Type.ROOK,
+        Type.KING,
+        Type.PAWN,
+        Type.LANCE,
+        Type.KNIGHT,
+        Type.SILVER,
+        Type.BISHOP,
+        Type.ROOK,
+        Type.EMPTY,
+    ];
+    return T[t];
+}
+
 /**
  * 駒
  *
- * address:
+ * アドレス：
  *  9  8  7  6  5  4  3  2  1
  * --------------------------+
  * 72 63 54 45 36 27 18  9  0|一
@@ -60,6 +82,9 @@ enum Type
  * 78 69 60 51 42 33 24 15  6|七
  * 79 70 61 52 43 34 25 16  7|八
  * 80 71 62 53 44 35 26 17  8|九
+ *
+ * -1: 持駒
+ * -2: 駒箱
  */
 struct Piece
 {
@@ -70,13 +95,22 @@ struct Piece
 
 /**
  * 局面
- *
- * 駒が40枚あるはず
  */
 struct Position
 {
-    Piece[40] pieces;
-    Color sideToMove;
+    Piece[40] pieces; // 駒が40枚あるはず
+    Color sideToMove; // 手番
+
+    /**
+     * 任意のアドレスにある駒を返す
+     */
+    Piece lookAt(int address)
+    {
+        foreach(p; this.pieces) {
+            if (p.address == address) return p;
+        }
+        return Piece(Color.NONE, Type.EMPTY, -2);
+    }
 }
 
 /**
@@ -86,8 +120,8 @@ struct Position
  */
 Position parseSfen(string sfen)
 {
-    immutable COLOR_TYPE = [
-        "1":  tuple(Color.NONE, Type.EMPTY),
+    immutable COLOR_AND_TYPE = [
+        "1":  tuple(Color.NONE,  Type.EMPTY),
         "P":  tuple(Color.BLACK, Type.PAWN),
         "L":  tuple(Color.BLACK, Type.LANCE),
         "N":  tuple(Color.BLACK, Type.KNIGHT),
@@ -118,9 +152,25 @@ Position parseSfen(string sfen)
         "+r": tuple(Color.WHITE, Type.PROMOTED_ROOK),
     ];
 
+    ref Piece find(ref Position pos, Color c, Type t) {
+        foreach(ref p; pos.pieces)  if (p.color == c && p.type == t && p.address == -2) return p;
+        foreach(ref p; pos.pieces)  if (p.type == t && p.address == -2)                 return p;
+        throw new Exception(format("too many %s in '%s'.", t, sfen));
+    }
+
     Position pos;
-    int index = 0;
-    foreach (ref p; pos.pieces) p = Piece(Color.NONE, Type.EMPTY, -2);
+    {
+        int i = 0;
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..1)  pos.pieces[i++] = Piece(c, Type.KING, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..1)  pos.pieces[i++] = Piece(c, Type.ROOK, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..1)  pos.pieces[i++] = Piece(c, Type.BISHOP, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..2)  pos.pieces[i++] = Piece(c, Type.GOLD, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..2)  pos.pieces[i++] = Piece(c, Type.SILVER, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..2)  pos.pieces[i++] = Piece(c, Type.KNIGHT, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..2)  pos.pieces[i++] = Piece(c, Type.LANCE, -2);
+        foreach (c; [Color.BLACK, Color.WHITE]) foreach (_; 0..9)  pos.pieces[i++] = Piece(c, Type.PAWN, -2);
+        assert(i == 40);
+    }
 
     string[] a = sfen.split(" ");
     string boardState = a[0];
@@ -139,8 +189,8 @@ Position parseSfen(string sfen)
     auto m = boardState.matchAll(r"\+?.");
     for (int rank = 0; rank <= 8; rank++) {
         for (int file = 8; file >= 0; file--) {
-            auto t = COLOR_TYPE[m.front.hit];
-            if (t[1] != Type.EMPTY) pos.pieces[index++] = Piece(t[0], t[1], file * 9 + rank);
+            auto t = COLOR_AND_TYPE[m.front.hit];
+            if (t[1] != Type.EMPTY)  find(pos, t[0], unpromote(t[1])) = Piece(t[0], t[1], file * 9 + rank);
             m.popFront();
         }
     }
@@ -150,24 +200,17 @@ Position parseSfen(string sfen)
         // 例：S, 4P, b, 3n, p, 18P
         foreach (c; piecesInHand.matchAll(r"(\d*)(\D)")) {
             int n = c[1] == "" ? 1 : to!int(c[1]);
-            auto t = COLOR_TYPE[c[2]];
-            foreach (i; 0 .. n) {
-                pos.pieces[index++] = Piece(t[0], t[1], -1); // 持ち駒はアドレス:-1にしておく
-            }
+            auto t = COLOR_AND_TYPE[c[2]];
+            foreach (_; 0..n)  find(pos, t[0], t[1]) = Piece(t[0], t[1], -1); // 持ち駒はアドレス:-1にしておく
         }
     }
 
     return pos;
 }
 
-Piece lookAt(Position pos, int address)
-{
-    foreach(p; pos.pieces) {
-        if (p.address == address) return p;
-    }
-    return Piece(Color.NONE, Type.EMPTY, -1);
-}
-
+/*
+ * KI2形式の文字列を返す
+ */
 string toKi2(ref Position pos)
 {
     immutable COLOR_STR = [" ", "v", " "];
