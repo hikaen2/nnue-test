@@ -4,5 +4,6 @@
 	],
 	"description": "A minimal D application.",
 	"license": "proprietary",
-	"name": "nnue-test"
+	"name": "nnue-test",
+	"dflags": ["-mcpu=native", "-flto=full"]
 }
